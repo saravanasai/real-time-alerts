@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
 from enum import Enum
+from typing import List
 
 app = FastAPI()
 
@@ -37,18 +38,20 @@ async def get_alerts(skip: int = 0, limit: int = 10):
 
 
 @app.post("/alerts", status_code=status.HTTP_201_CREATED)
-async def store_alert(alert: Alert):
+async def store_alerts_bulk(alerts_list: List[Alert]):
+    created_alerts = []
 
-    new_alert = {
-        "id": len(alerts)+1,
-        "user_id": alert.user_id,
-        "alert_price": alert.alert_price,
-        "metal_type": alert.metal_type
-    }
+    for alert in alerts_list:
+        new_alert = {
+            "id": len(alerts) + 1,
+            "user_id": alert.user_id,
+            "alert_price": alert.alert_price,
+            "metal_type": alert.metal_type
+        }
+        alerts.append(new_alert)
+        created_alerts.append(new_alert)
 
-    alerts.append(new_alert)
-
-    return {"data": new_alert}
+    return {"count": len(created_alerts), "data": created_alerts}
 
 
 @app.get("/alerts/{id}")
