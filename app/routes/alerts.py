@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from schemas import alerts_sehemas
+from ..schemas import alerts_sehemas
 from typing import List
 
 router = APIRouter()

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routes import alerts
+from .routes import alerts
 
 app = FastAPI()
 
