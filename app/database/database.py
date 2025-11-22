@@ -2,7 +2,7 @@ from typing import AsyncGenerator, Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import sessionmaker,  declarative_base
+from sqlalchemy.orm import sessionmaker
 from app.config import Config
 from sqlalchemy.pool import NullPool
 
@@ -50,9 +50,6 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
     expire_on_commit=False
 )
-
-
-Base = declarative_base()
 
 
 async def get_async_db() -> AsyncGenerator[AsyncSession, None]:

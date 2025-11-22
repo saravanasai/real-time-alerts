@@ -1,6 +1,6 @@
 # app/models/user.py
-from sqlalchemy import Column, Integer, String
-from app.database.database import Base
+from sqlalchemy import Column, Integer, String, DateTime
+from app.database.base import Base
 
 
 class User(Base):
@@ -9,3 +9,5 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
+    password = Column(String, nullable=False)
+    created_at = Column(DateTime, default=DateTime, nullable=False)
