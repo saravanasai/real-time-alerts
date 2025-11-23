@@ -9,11 +9,15 @@ class Base:
 
     created_at = Column(
         DateTime(timezone=True),
+        default=func.now(),
         nullable=False,
-        server_default=func.timezone("Asia/Kolkata", func.now()),
+        server_default=func.now()
     )
+
     updated_at = Column(
         DateTime(timezone=True),
+        default=func.now(),
         nullable=True,
-        onupdate=func.timezone("Asia/Kolkata", func.now()),
+        server_default=func.now(),
+        server_onupdate=func.now(),
     )

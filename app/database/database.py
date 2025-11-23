@@ -35,7 +35,6 @@ else:
 
 async_engine = create_async_engine(
     ASYNC_DATABASE_URL,
-    poolclass=NullPool,
     pool_pre_ping=True,
     connect_args={
         "statement_cache_size": 0,
