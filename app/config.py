@@ -12,7 +12,14 @@ class Config:
     POSTGRES_DB = os.getenv('POSTGRES_DB', 'alerts_db')
     POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'db')
     POSTGRES_PORT = os.getenv('POSTGRES_PORT', '5432')
-    CONNECTION_URL = f'postgresql://{os.getenv("POSTGRES_USER", "root")}:{os.getenv("POSTGRES_PASSWORD", "root")}@{os.getenv("POSTGRES_HOST", "localhost")}:{os.getenv("POSTGRES_PORT", "5432")}/{ os.getenv("POSTGRES_DB", "alerts_db")}'
+    CONNECTION_URL = f'postgresql://{os.getenv("POSTGRES_USER", "root")}:{os.getenv("POSTGRES_PASSWORD", "root")}@{os.getenv("POSTGRES_HOST", "localhost")}:{os.getenv("POSTGRES_PORT", "5432")}/{os.getenv("POSTGRES_DB", "alerts_db")}'
+
+    # JWT Configuration
+    SECRET_KEY = os.getenv(
+        "SECRET_KEY", "b0ab05f487cf0877b29ff510bb8c1222")
+    ALGORITHM = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES = 30
+    REFRESH_TOKEN_EXPIRE_DAYS = 7
 
     @property
     def postgresql_engine(self):
