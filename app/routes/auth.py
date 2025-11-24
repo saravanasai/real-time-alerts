@@ -3,9 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database.database import get_async_db
 from app.model.user import User
-from app.schemas.auth_schemas import LoginRequest, TokenResponse, RefreshTokenRequest
+from app.schemas.auth_schemas import LoginRequest, TokenResponse, RefreshTokenRequest, AuthenticatedUser
 from app.utils.jwt import create_access_token, create_refresh_token, verify_token
 from app.utils.password import verify_password
+from app.utils.auth import get_current_user
 
 router = APIRouter(
     prefix="/auth",
@@ -30,7 +31,7 @@ async def login(login_request: LoginRequest, db: AsyncSession = Depends(get_asyn
         )
 
     access_token = create_access_token(
-        data={"sub": user.id, "email": user.email}
+        data={"sub": str(user.id), "email": user.email}
     )
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
@@ -81,3 +82,12 @@ async def refresh_token(
         access_token=access_token,
         refresh_token=new_refresh_token
     )
+
+
+@router.get("/me", response_model=AuthenticatedUser)
+async def me(current_user: User = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "name": current_user.name
+    }

@@ -33,6 +33,8 @@ def verify_token(token: str) -> Optional[dict]:
     try:
         payload = jwt.decode(token, Config.SECRET_KEY,
                              algorithms=[Config.ALGORITHM])
+        print("PAYLOAD inside util of JWT", payload)
         return payload
-    except JWTError:
+    except JWTError as e:
+        print("Error:", e)
         return None

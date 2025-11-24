@@ -14,3 +14,9 @@ class TokenResponse(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+
+class AuthenticatedUser(BaseModel):
+    id: int
+    name: str
+    email: str
