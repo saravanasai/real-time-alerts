@@ -2,8 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15-alpine
-    container_name: alerts_db
+    image: postgres:15
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
@@ -13,27 +12,27 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U root"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U root -d alerts_db"]
+      interval: 5s
       timeout: 5s
       retries: 5
 
   web:
     build: .
-    container_name: alerts_api
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://root:root@db:5432/alerts_db
-      ENVIRONMENT: development
-      PYTHONUNBUFFERED: 1
-    volumes:
-      - .:/app
-      - /app/__pycache__
+      POSTGRES_HOST: db
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: alerts_db
+      POSTGRES_PORT: 5432
+      SECRET_KEY: b0ab05f487cf0877b29ff510bb8c1222
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - .:/app
 
 volumes:
   postgres_data:
