@@ -28,13 +28,11 @@ def create_refresh_token(data: dict) -> str:
     return encoded_jwt
 
 
-def verify_token(token: str, token_type: str = "access") -> Optional[dict]:
+def verify_token(token: str) -> Optional[dict]:
     """Verify and decode JWT token."""
     try:
         payload = jwt.decode(token, Config.SECRET_KEY,
                              algorithms=[Config.ALGORITHM])
-        if payload.get("type") != token_type:
-            return None
         return payload
     except JWTError:
         return None

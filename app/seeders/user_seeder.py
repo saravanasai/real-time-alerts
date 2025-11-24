@@ -8,7 +8,7 @@ async def seed_users():
         user1 = User(
             email="john@example.com",
             name="John Doe",
-            password="hashedpassword123"
+            password="plainpassword123"
         )
         user2 = User(
             email="jane@example.com",
@@ -16,8 +16,15 @@ async def seed_users():
             password="hashedpassword456"
         )
 
+        user3 = User(
+            email="sai@auragold.in",
+            name="Saravana Thiyagarajan",
+            password="1412"
+        )
+
         session.add(user1)
         session.add(user2)
+        session.add(user3)
 
         await session.commit()
 
