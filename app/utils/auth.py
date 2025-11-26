@@ -23,11 +23,8 @@ async def get_current_user(
     4. Passes it to credentials.credentials
     """
     token = credentials.credentials
-    print("TOKEN PASSED IN", token)
     # Verify the token
     payload = verify_token(token)
-
-    print("PAYLOAD", payload)
 
     if not payload:
         raise HTTPException(

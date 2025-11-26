@@ -1,8 +1,12 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from app.utils.auth import get_current_user
 from ..schemas import alerts_sehemas
 from typing import List
 
-router = APIRouter()
+router = APIRouter(
+    dependencies=[Depends(get_current_user)]
+)
 
 alerts = [
     {'id': 1, 'user_id': 1, 'alert_price': '2000', 'metal_type': 'gold'},
