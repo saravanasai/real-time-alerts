@@ -10,10 +10,9 @@ class MetalType(str, Enum):
 
 class Alert(BaseModel):
     user_id: int
-    alert_price: str
+    alert_price: int
     metal_type: MetalType
 
 
 class AlertResponseFormatter(BaseModel):
-    count: int
-    data: List[Alert]
+    data: Alert
