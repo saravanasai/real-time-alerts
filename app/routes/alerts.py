@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.service import alert_service
 from app.service.alert_service import AlertService
 from app.utils.auth import get_current_user
 from app.database.database import get_async_db
