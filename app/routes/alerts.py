@@ -1,8 +1,10 @@
+import json
 from fastapi import APIRouter, Depends, HTTPException, status
+
 
 from app.service.alert_service import AlertService
 from app.utils.auth import get_current_user
-from app.database.database import get_async_db
+from app.database.database import get_async_db, get_cache
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..schemas import alerts_sehemas
 from typing import List
@@ -11,7 +13,7 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)]
 )
 
-# auhorization policy
+# auhorization policys
 
 
 async def authorize_alert_access(
@@ -65,3 +67,75 @@ async def delete_alert(alert=Depends(authorize_alert_access), db: AsyncSession =
     alert_service_instance = AlertService(db)
     await alert_service_instance.delete_alert(alert.get("id"))
     return None
+
+
+@router.post("/alerts-set")
+async def cache_all_alerts_to_redis(db: AsyncSession = Depends(get_async_db)):
+    """
+    Cache all alerts to Redis ZSET organized by metal type.
+
+    Structure:
+    - Key: alerts:gold
+    - Key: alerts:silver  
+    - Score: alert_price
+    - Member: JSON {"id": 204, "user_id": 14, "alert_price": 2710, "metal_type": "gold"}
+    """
+    cache = await get_cache()
+    alert_service = AlertService(db)
+    chunk_size = 100
+
+    # Get min and max alert IDs
+    min_id, max_id = await alert_service.get_min_max_alert_ids()
+
+    if min_id is None or max_id is None:
+        return {"success": True, "message": "No alerts found"}
+
+    # Clear existing data
+    await cache.delete("alerts:gold")
+    await cache.delete("alerts:silver")
+
+    # Process alerts in chunks
+    current_id = min_id
+
+    while current_id <= max_id:
+        alerts = await alert_service.get_alerts_set(current_id, chunk_size)
+
+        if not alerts:
+            break
+
+        # Group by metal type
+        gold_mapping = {}
+        silver_mapping = {}
+
+        for alert in alerts:
+            alert_data = {
+                "id": alert['id'],
+                "user_id": alert['user_id'],
+                "alert_price": alert['alert_price'],
+                "metal_type": alert['metal_type']
+            }
+
+            score = float(alert['alert_price'])
+            member = json.dumps(alert_data)
+
+            metal_type = alert['metal_type'].lower()
+            if metal_type == 'gold':
+                gold_mapping[member] = score
+            elif metal_type == 'silver':
+                silver_mapping[member] = score
+
+        # Add to Redis
+        if gold_mapping:
+            await cache.zadd("alerts:gold", gold_mapping)
+
+        if silver_mapping:
+            await cache.zadd("alerts:silver", silver_mapping)
+
+        # Move cursor
+        last_alert_id = alerts[-1]['id']
+        current_id = last_alert_id + 1
+
+        if len(alerts) < chunk_size:
+            break
+
+    return {"success": True, "message": "Alerts cached to Redis"}
