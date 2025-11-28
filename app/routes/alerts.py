@@ -63,9 +63,13 @@ async def get_alert(alert=Depends(authorize_alert_access)):
 
 
 @router.delete("/alerts/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_alert(alert=Depends(authorize_alert_access), db: AsyncSession = Depends(get_async_db)):
+async def delete_alert(alert=Depends(authorize_alert_access), db: AsyncSession = Depends(get_async_db), cache=Depends(get_cache)):
     alert_service_instance = AlertService(db)
     await alert_service_instance.delete_alert(alert.get("id"))
+    if alert.get("metal_type").lower() == "gold":
+        await cache.zrem("alerts:gold", f"{alert.get('user_id')}:{alert.get('id')}")
+    else:
+        await cache.zrem("alerts:silver", f"{alert.get('user_id')}:{alert.get('id')}")
     return None
 
 
@@ -108,15 +112,9 @@ async def cache_all_alerts_to_redis(db: AsyncSession = Depends(get_async_db)):
         silver_mapping = {}
 
         for alert in alerts:
-            alert_data = {
-                "id": alert['id'],
-                "user_id": alert['user_id'],
-                "alert_price": alert['alert_price'],
-                "metal_type": alert['metal_type']
-            }
 
             score = float(alert['alert_price'])
-            member = json.dumps(alert_data)
+            member = f"{alert['user_id']}:{alert['id']}"
 
             metal_type = alert['metal_type'].lower()
             if metal_type == 'gold':
