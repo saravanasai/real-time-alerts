@@ -1,5 +1,6 @@
 from typing import AsyncGenerator, Generator
 
+import redis.asyncio as redis
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -49,6 +50,36 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
     expire_on_commit=False
 )
+
+# Redis async client
+_redis_client = None
+
+
+async def get_cache() -> redis.Redis:
+    """Get async Redis client (connection pooling handled automatically)."""
+    global _redis_client
+    if _redis_client is None:
+        _redis_client = redis.Redis(
+            host=Config.REDIS_HOST,
+            port=Config.REDIS_PORT,
+            db=Config.REDIS_DB,
+            decode_responses=True,
+            socket_keepalive=True,
+            max_connections=50,
+            socket_connect_timeout=5,  # Connection timeout
+            socket_timeout=5,  # Read timeout
+            retry_on_timeout=True,  # Auto-retry on timeout
+            health_check_interval=30  # Check connection health every 30s
+        )
+    return _redis_client
+
+
+async def close_redis():
+    """Close Redis connection on app shutdown."""
+    global _redis_client
+    if _redis_client:
+        await _redis_client.aclose()
+        _redis_client = None
 
 
 async def get_async_db() -> AsyncGenerator[AsyncSession, None]:

@@ -14,6 +14,11 @@ class Config:
     POSTGRES_PORT = os.getenv('POSTGRES_PORT', '5432')
     CONNECTION_URL = f'postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}'
 
+    # Redis Configuration
+    REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+    REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+    REDIS_DB = int(os.getenv('REDIS_DB', 0))
+
     # JWT Configuration
     SECRET_KEY = os.getenv(
         "SECRET_KEY", "b0ab05f487cf0877b29ff510bb8c1222")
