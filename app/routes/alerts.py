@@ -12,11 +12,37 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)]
 )
 
+# auhorization policy
+
+
+async def authorize_alert_access(
+    id: int,
+    db: AsyncSession = Depends(get_async_db),
+    user=Depends(get_current_user)
+):
+    alert_service_instance = AlertService(db)
+    alert = await alert_service_instance.get_alert_by_id(id)
+
+    if alert is None:
+        raise HTTPException(status_code=404, detail="Alert not found")
+
+    # Check if the alert belongs to the current user
+    if alert.get("user_id") != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to access this alert"
+        )
+
+    return alert
+
 
 @router.get("/alerts")
-async def get_alerts(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_async_db)):
+async def get_alerts(skip: int = 0, limit: int = 10,
+                     db: AsyncSession = Depends(get_async_db),
+                     user=Depends(get_current_user)
+                     ):
     alert_service_instance = AlertService(db)
-    alerts = await alert_service_instance.get_alerts(skip=skip, limit=limit)
+    alerts = await alert_service_instance.get_alerts(user.id, skip=skip, limit=limit)
 
     return {"count": len(alerts), "data": alerts}
 
@@ -31,22 +57,12 @@ async def store_alert(new_alert: alerts_sehemas.Alert, db=Depends(get_async_db))
 
 
 @router.get("/alerts/{id}")
-async def get_alert(id: int, db: AsyncSession = Depends(get_async_db)):
-
-    alert_service_instance = AlertService(db)
-    alert = await alert_service_instance.get_alert_by_id(id)
-
-    if alert is None:
-        raise HTTPException(status_code=404, detail="Alert not found")
-
+async def get_alert(alert=Depends(authorize_alert_access)):
     return {"data": alert}
 
 
 @router.delete("/alerts/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_alert(id: int, db: AsyncSession = Depends(get_async_db)):
+async def delete_alert(alert=Depends(authorize_alert_access), db: AsyncSession = Depends(get_async_db)):
     alert_service_instance = AlertService(db)
-    alert = await alert_service_instance.delete_alert(id)
-
-    if alert is False:
-        raise HTTPException(status_code=404, detail="Alert not found")
+    await alert_service_instance.delete_alert(alert.get("id"))
     return None

@@ -1,6 +1,7 @@
 
 
 from hmac import new
+from certifi import where
 from httpx import delete
 from sqlalchemy import select
 
@@ -12,8 +13,8 @@ class AlertService:
     def __init__(self, db_session):
         self.db_session = db_session
 
-    async def get_alerts(self, skip: int = 0, limit: int = 10):
-        result = await self.db_session.execute(select(Alerts).offset(skip).limit(limit))
+    async def get_alerts(self, user_id: int, skip: int = 0, limit: int = 10):
+        result = await self.db_session.execute(select(Alerts).where(Alerts.user_id == user_id).offset(skip).limit(limit))
         alerts = result.scalars().all()
         alerts_dict = [alert.to_dict() for alert in alerts]
         return alerts_dict

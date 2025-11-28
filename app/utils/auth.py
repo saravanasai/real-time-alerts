@@ -5,6 +5,9 @@ from sqlalchemy import select
 from app.model.user import User
 from app.database.database import get_async_db
 from app.utils.jwt import verify_token
+import logging
+
+logger = logging.getLogger("app.utils.auth")
 
 security = HTTPBearer()
 
@@ -43,7 +46,7 @@ async def get_current_user(
     # Fetch user from database
     result = await db.execute(select(User).where(User.id == int(user_id)))
     user = result.scalars().first()
-
+    logger.info(f"Authenticated user: {user}")
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
