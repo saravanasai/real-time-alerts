@@ -29,6 +29,22 @@ services:
       timeout: 3s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: root
+      RABBITMQ_DEFAULT_PASS: root
+    ports:
+      - "5672:5672"      # AMQP protocol
+      - "15672:15672"    # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   web:
     build: .
     ports:
@@ -41,9 +57,79 @@ services:
       POSTGRES_PORT: 5432
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      CELERY_BROKER_URL: amqp://root:root@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: rpc://
       SECRET_KEY: b0ab05f487cf0877b29ff510bb8c1222
     depends_on:
       db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+  celery_worker:
+    build: .
+    # FIXED: Changed from app.main to app.celery_app
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: alerts_db
+      POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CELERY_BROKER_URL: amqp://root:root@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: rpc://
+      SECRET_KEY: b0ab05f487cf0877b29ff510bb8c1222
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+  celery_beat:
+    build: .
+    # FIXED: Changed from app.main to app.celery_app
+    command: celery -A app.celery_app beat --loglevel=info
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: alerts_db
+      POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CELERY_BROKER_URL: amqp://root:root@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: rpc://
+      SECRET_KEY: b0ab05f487cf0877b29ff510bb8c1222
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+  flower:
+    build: .
+    command: celery -A app.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      CELERY_BROKER_URL: amqp://root:root@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: rpc://
+    depends_on:
+      rabbitmq:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -53,3 +139,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  rabbitmq_data:
