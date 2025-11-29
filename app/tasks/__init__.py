@@ -1,0 +1,1 @@
+from app.tasks.alert_task import check_gold_price_and_send_alert

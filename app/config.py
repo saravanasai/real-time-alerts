@@ -1,3 +1,4 @@
+from logging import config
 import os
 from kombu import Queue
 from celery.schedules import crontab
@@ -72,13 +73,16 @@ class CeleryConfig:
     }
 
     beat_schedule: dict = {
-
+        "check_gold_price_every_1_minutes": {
+            "task": "check_gold_price_and_send_alert",
+            "schedule": crontab(minute="*/1"),  # Every 1 minute
+        },
     }
 
-    # imports = "src.tasks"
+    imports = ("app.tasks.alert_task",)
     broker_connection_retry_on_startup = True
     timezone = "Asia/Kolkata"
 
 
-celery_settings = Config()
+configuration = Config()
 celery_settings = CeleryConfig()
