@@ -1,3 +1,4 @@
+from functools import cache
 from celery import shared_task
 import asyncio
 from app.database.database import get_task_cache

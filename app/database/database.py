@@ -1,4 +1,4 @@
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from typing import AsyncGenerator, Generator
 
 import redis.asyncio as redis
@@ -56,20 +56,30 @@ AsyncSessionLocal = async_sessionmaker(
 _redis_client = None
 
 
-@contextmanager
-def get_task_cache():
+@asynccontextmanager
+async def get_task_cache():
+    """
+    Create a fresh Redis connection for Celery tasks.
+    Each task gets its own connection to avoid event loop issues.
+    """
+    cache = redis.Redis(
+        host=Config.REDIS_HOST,
+        port=Config.REDIS_PORT,
+        db=Config.REDIS_DB,
+        decode_responses=True,
+        socket_keepalive=True,
+        socket_connect_timeout=5,
+        socket_timeout=5,
+        retry_on_timeout=True,
+    )
     try:
-        cache = get_cache()  # Your existing `get_cache` method
         yield cache
-    except Exception as e:
-        raise e
     finally:
-        if hasattr(cache, "close"):
-            cache.close()
+        await cache.aclose()
 
 
 async def get_cache() -> redis.Redis:
-    """Get async Redis client (connection pooling handled automatically)."""
+    """Get async Redis client for FastAPI endpoints (connection pooling handled automatically)."""
     global _redis_client
     if _redis_client is None:
         _redis_client = redis.Redis(
