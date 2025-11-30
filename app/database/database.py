@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from typing import AsyncGenerator, Generator
 
 import redis.asyncio as redis
@@ -53,6 +54,18 @@ AsyncSessionLocal = async_sessionmaker(
 
 # Redis async client
 _redis_client = None
+
+
+@contextmanager
+def get_task_cache():
+    try:
+        cache = get_cache()  # Your existing `get_cache` method
+        yield cache
+    except Exception as e:
+        raise e
+    finally:
+        if hasattr(cache, "close"):
+            cache.close()
 
 
 async def get_cache() -> redis.Redis:

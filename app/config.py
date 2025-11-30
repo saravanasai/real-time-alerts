@@ -67,7 +67,7 @@ class CeleryConfig:
     ]
 
     task_routes = {
-        "send_alert": {
+        "send_alert_notification": {
             "queue": "high_priority",
         },
     }
