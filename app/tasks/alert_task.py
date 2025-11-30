@@ -60,28 +60,28 @@ async def _check_and_process_alerts():
     """
     Main async function to process alerts
     """
-    cache = get_task_cache()
+    async with get_task_cache() as cache:
 
-    try:
-        # Get current gold price from cache
-        current_gold_price = await get_current_gold_price()
-        current_gold_price = float(current_gold_price)
+        try:
+            # Get current gold price from cache
+            current_gold_price = await get_current_gold_price()
+            current_gold_price = float(current_gold_price)
 
-        logger.info(f"Current gold price: ₹{current_gold_price}")
+            logger.info(f"Current gold price: ₹{current_gold_price}")
 
-        # Process gold alerts
-        gold_count = await process_alerts_by_metal_type(
-            cache=cache,
-            metal_type="gold",
-            threshold_price=current_gold_price,
-            batch_size=100
-        )
+            # Process gold alerts
+            gold_count = await process_alerts_by_metal_type(
+                cache=cache,
+                metal_type="gold",
+                threshold_price=current_gold_price,
+                batch_size=100
+            )
 
-        return f"Processed {gold_count} gold alerts"
+            return f"Processed {gold_count} gold alerts"
 
-    except Exception as e:
-        logger.error(f"Error: {e}", exc_info=True)
-        raise
+        except Exception as e:
+            logger.error(f"Error: {e}", exc_info=True)
+            raise
 
 
 async def process_alerts_by_metal_type(
